@@ -144,4 +144,18 @@ for epoch in range(EPOCHS):
 
     print(f"          → Val Loss: {val_loss:.4f} | Val Acc: {val_acc:.4f}")
 
-torch.save(model.state_dict(), "model.pth")
+torch.save({
+    "model_state": model.state_dict(),
+    "config": {
+        "vocab_size": len(word2idx),
+        "embed_dim": EMBED_DIM,
+        "hidden_dim": HIDDEN_DIM,
+        "num_classes": NUM_CLASSES,
+        "padding_idx": word2idx["<PAD>"],
+        "num_layers": NUM_LAYERS,
+        "drop_out": DROP_OUT,
+        "pretrained_embeddings": glove_embeddings
+    },
+    "word2idx": word2idx  # optional but useful for inference
+}, "models/fake_news_checkpoint.pt")
+

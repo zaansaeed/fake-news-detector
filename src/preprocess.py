@@ -4,7 +4,7 @@ import nltk
 from nltk.tokenize import word_tokenize
 from collections import Counter
 import numpy as np
-nltk.download('punkt_tab')
+nltk.download('punkt')
 
 
 def load_dataset_two(path_of_real, path_of_fake):
@@ -16,7 +16,7 @@ def load_dataset_two(path_of_real, path_of_fake):
     df = pd.concat([df_real, df_fake], ignore_index=True)
     df =  df[["title", "label"]]
     df.rename(columns={"title": "tokens"}, inplace=True)
-
+    df["tokens"] = df["tokens"].apply(clean_and_tokenize)
     return df
     
 
@@ -41,7 +41,6 @@ def load_dataset_one(path):
     
     df["label"] = df["label"].map(label_map)
     df["tokens"] = df["statement"].apply(clean_and_tokenize)
-
     return df
 
 
@@ -55,10 +54,9 @@ def clean_and_tokenize(text):
 
 
 def build_vocabulary(token_list,min_freq=2):
-    counter =Counter()
+    counter = Counter()
     for tokens in token_list:
         counter.update(tokens) 
-
     #unique words with frequency >= min_freq
     vocab = {word for word, freq in counter.items() if freq >= min_freq}
 
