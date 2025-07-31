@@ -4,11 +4,7 @@ import nltk
 from nltk.tokenize import word_tokenize
 from collections import Counter
 import numpy as np
-
-try:
-    nltk.data.find("tokenizers/punkt")
-except LookupError:
-    nltk.download("punkt")
+nltk.download('punkt_tab')
 
 
 def load_dataset_two(path_of_real, path_of_fake):
