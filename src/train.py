@@ -33,12 +33,12 @@ DROP_OUT = 0.5
 EMBED_DIM = 100
 HIDDEN_DIM = 32
 NUM_CLASSES = 2
-EPOCHS = 50
+EPOCHS = 5
 NUM_LAYERS = 2
 LEARNING_RATE = 1e-4
 
 set_seed(42)
-train_df = load_dataset_two("data/politifact_real.csv", "data/politifact_fake.csv")
+train_df = load_dataset_two("data/True.csv", "data/Fake.csv")
 from sklearn.model_selection import train_test_split
 train_df, val_df = train_test_split(
     train_df,
@@ -158,4 +158,28 @@ torch.save({
     },
     "word2idx": word2idx  # optional but useful for inference
 }, "models/fake_news_checkpoint.pt")
+
+
+
+test_df = load_dataset_two("data/true_test.csv", "data/fake_test.csv")
+test_sequences = encode_and_pad(test_df["tokens"], word2idx, max_length=MAX_LEN)
+
+
+
+test_data = FakeNewsDataset(test_sequences, test_df["label"].values)
+
+
+test_loader = DataLoader(train_dataset, batch_size=BATCH_SIZE, shuffle=True)
+
+
+model.eval()
+correct, total = 0, 0
+with torch.no_grad():
+    for xb, yb in test_loader:
+        logits = model(xb)
+        preds  = logits.argmax(dim=1)
+        correct += (preds == yb).sum().item()
+        total   += yb.size(0)
+print(f"Test accuracy: {correct/total:.2%}")
+
 

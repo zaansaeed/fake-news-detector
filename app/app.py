@@ -55,8 +55,7 @@ def predict(input_data: NewsInput):
         with torch.no_grad():
             output = model(x)
             prediction = torch.argmax(output, dim=1).item()
-            labels = {0: "fake", 1: "real"}
-        return {"prediction": labels[prediction]}
+        return prediction
 
     except Exception as e:
         raise HTTPException(status_code=500, detail=str(e))

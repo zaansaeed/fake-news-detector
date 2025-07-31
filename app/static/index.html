@@ -41,7 +41,7 @@
     const data = await response.json();
     const resultBox = document.getElementById("result");
 
-    if (data.prediction === 1) {
+    if (data === 1) {
       resultBox.innerText = "Real News";
       resultBox.style.color = "green";
     } else {
