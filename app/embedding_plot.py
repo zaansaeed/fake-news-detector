@@ -26,7 +26,6 @@ def generate_plot(user_input, word2idx, embeddings):
         n_components=2, 
         perplexity=perplexity, 
         random_state=42,
-        n_iter=500,  # Reduce from 1000 to 500 for even faster processing
         method='barnes_hut',  # Always use faster method
         angle=0.5,  # Increase angle for speed (default is 0.5)
         n_jobs=-1  # Use all CPU cores
