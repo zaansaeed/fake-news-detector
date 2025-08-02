@@ -38,7 +38,7 @@ def generate_plot(user_input, word2idx, embeddings):
     
     fig = go.Figure()
     
-    fig.add_trace(go.Scatter(
+    fig.add_trace(go.Scatter3d(
         x=x_coords,
         y=y_coords,
         z=z_coords,
@@ -46,7 +46,7 @@ def generate_plot(user_input, word2idx, embeddings):
         mode='markers+text',
         textposition='top center',
         marker=dict(color='#636efa', symbol='circle'),
-        hovertemplate="x=%{x}<br>y=%{y}<br>word=%{text}<extra></extra>",
+        hovertemplate="x=%{x}<br>y=%{y}<br>z=%{z}<br>word=%{text}<extra></extra>",
         showlegend=False
     ))
     
