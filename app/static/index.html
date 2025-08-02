@@ -5,32 +5,7 @@
   <title>Fake News Detector</title>
   <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet">
   <script src="https://cdn.plot.ly/plotly-2.27.0.min.js"></script>  
-  <style>
-    .loading {
-      opacity: 0.6;
-      pointer-events: none;
-    }
-    .spinner-border-sm {
-      width: 1rem;
-      height: 1rem;
-    }
-    .fade-in {
-      animation: fadeIn 0.5s ease-in;
-    }
-    @keyframes fadeIn {
-      from { opacity: 0; transform: translateY(10px); }
-      to { opacity: 1; transform: translateY(0); }
-    }
-    .result-card {
-      transition: all 0.3s ease;
-    }
-    .plot-container {
-      min-height: 500px;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-    }
-  </style>
+
 </head>
 <body class="bg-light">
 
@@ -41,215 +16,56 @@
   </div>
 
   <div class="card shadow p-4 mx-auto" style="max-width: 600px;">
-    <div class="input-group mb-3">
-      <input type="text" class="form-control" id="titleInput" placeholder="e.g. NASA discovers alien microbes">
-      <button class="btn btn-primary" id="predictBtn" onclick="predict()">
-        <span id="btnText">Predict</span>
-        <span id="btnSpinner" class="spinner-border spinner-border-sm ms-2 d-none" role="status"></span>
-      </button>
-    </div>
+    <input type="text" class="form-control mb-3" id="titleInput" placeholder="e.g. NASA discovers alien microbes">
+    <button class="btn btn-primary w-100" onclick="predict()">Predict</button>
     <div id="result" class="mt-4 text-center fs-5"></div>
   </div>
 
   <div class="mt-5">
     <h3 class="text-center mb-4">Token Embedding Visualization</h3>
-    <div id="embeddingPlot" class="plot-container">
-      <div class="text-muted">Enter a headline above to see the embedding visualization</div>
+    <div id="embeddingPlot">
     </div>
   </div>
 </div>
 
 <script>
-  let predictionTimeout;
-  let plotTimeout;
-
-  // Debounce function to prevent excessive API calls
-  function debounce(func, wait) {
-    return function executedFunction(...args) {
-      const later = () => {
-        clearTimeout(predictionTimeout);
-        func(...args);
-      };
-      clearTimeout(predictionTimeout);
-      predictionTimeout = later;
-    };
-  }
-
-  // Show loading state
-  function setLoading(loading) {
-    const btn = document.getElementById('predictBtn');
-    const btnText = document.getElementById('btnText');
-    const btnSpinner = document.getElementById('btnSpinner');
-    const container = document.querySelector('.container');
-    
-    if (loading) {
-      btn.disabled = true;
-      btnText.textContent = 'Analyzing...';
-      btnSpinner.classList.remove('d-none');
-      container.classList.add('loading');
-    } else {
-      btn.disabled = false;
-      btnText.textContent = 'Predict';
-      btnSpinner.classList.add('d-none');
-      container.classList.remove('loading');
-    }
-  }
-
-  // Show result with animation
-  function showResult(isReal, confidence = null) {
-    const resultBox = document.getElementById("result");
-    resultBox.innerHTML = '';
-    
-    const resultCard = document.createElement('div');
-    resultCard.className = 'result-card fade-in p-3 rounded';
-    
-    if (isReal) {
-      resultCard.innerHTML = `
-        <div class="d-flex align-items-center justify-content-center">
-          <i class="bi bi-check-circle-fill text-success me-2" style="font-size: 1.5rem;">✓</i>
-          <span class="text-success fw-bold">Real News</span>
-        </div>
-      `;
-      resultCard.style.backgroundColor = '#d4edda';
-      resultCard.style.border = '1px solid #c3e6cb';
-    } else {
-      resultCard.innerHTML = `
-        <div class="d-flex align-items-center justify-content-center">
-          <i class="bi bi-x-circle-fill text-danger me-2" style="font-size: 1.5rem;">✗</i>
-          <span class="text-danger fw-bold">Fake News</span>
-        </div>
-      `;
-      resultCard.style.backgroundColor = '#f8d7da';
-      resultCard.style.border = '1px solid #f5c6cb';
-    }
-    
-    resultBox.appendChild(resultCard);
-  }
-
-  // Show error message
-  function showError(message) {
-    const resultBox = document.getElementById("result");
-    resultBox.innerHTML = `
-      <div class="alert alert-danger fade-in" role="alert">
-        <i class="bi bi-exclamation-triangle-fill me-2"></i>
-        ${message}
-      </div>
-    `;
-  }
-
-  // Update plot with loading state
-  function updatePlot(plotData) {
-    const plotContainer = document.getElementById("embeddingPlot");
-    
-    if (plotData.error) {
-      plotContainer.innerHTML = `
-        <div class="text-center text-muted">
-          <i class="bi bi-info-circle me-2"></i>
-          ${plotData.error}
-        </div>
-      `;
-      return;
-    }
-    
-    if (plotData.data && plotData.data.length > 0) {
-      Plotly.newPlot("embeddingPlot", plotData.data, plotData.layout, {
-        responsive: true,
-        displayModeBar: false
-      });
-    } else {
-      plotContainer.innerHTML = `
-        <div class="text-center text-muted">
-          <i class="bi bi-info-circle me-2"></i>
-          No visualization data available
-        </div>
-      `;
-    }
-  }
-
-  // Main prediction function
   async function predict() {
-    const title = document.getElementById("titleInput").value.trim();
+    const title = document.getElementById("titleInput").value;
     
-    if (!title) {
-      showError("Please enter a headline to analyze.");
-      return;
-    }
-    
-    setLoading(true);
-    
-    try {
-      // Call the prediction API
-      const response = await fetch("/predict", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ title })
-      });
-      
-      if (!response.ok) {
-        throw new Error(`HTTP error! status: ${response.status}`);
-      }
-      
-      const data = await response.json();
-      showResult(data === 1);
-      
-      // Request embedding plot with delay to avoid overwhelming the server
-      setTimeout(() => {
-        fetchEmbeddingPlot(title);
-      }, 500);
-      
-    } catch (error) {
-      console.error('Prediction error:', error);
-      showError("Failed to analyze the headline. Please try again.");
-    } finally {
-      setLoading(false);
-    }
-  }
-
-  // Fetch embedding plot
-  async function fetchEmbeddingPlot(title) {
-    try {
-      const response = await fetch("/embedding-plot", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ title })
-      });
-      
-      if (!response.ok) {
-        throw new Error(`HTTP error! status: ${response.status}`);
-      }
-      
-      const plotData = await response.json();
-      updatePlot(plotData);
-      
-    } catch (error) {
-      console.error('Plot error:', error);
-      document.getElementById("embeddingPlot").innerHTML = `
-        <div class="text-center text-muted">
-          <i class="bi bi-exclamation-triangle me-2"></i>
-          Failed to load visualization
-        </div>
-      `;
-    }
-  }
-
-  // Debounced prediction for real-time feedback
-  const debouncedPredict = debounce(predict, 1000);
-
-  // Add event listeners
-  document.addEventListener('DOMContentLoaded', function() {
-    const titleInput = document.getElementById("titleInput");
-    
-    // Enter key to predict
-    titleInput.addEventListener('keypress', function(e) {
-      if (e.key === 'Enter') {
-        predict();
-      }
+    // Call the prediction API
+    const response = await fetch("/predict", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ title })
     });
-    
-    // Optional: Real-time prediction on input change (debounced)
-    // titleInput.addEventListener('input', debouncedPredict);
-  });
+    const data = await response.json();
+    const resultBox = document.getElementById("result");
+
+    if (data === 1) {
+      resultBox.innerText = "Real News";
+      resultBox.style.color = "green";
+    } else {
+      resultBox.innerText = "Fake News";
+      resultBox.style.color = "red";
+    }
+
+    // Now request the embedding plot based on user input
+fetch("/embedding-plot", {
+  method: "POST",
+  headers: { "Content-Type": "application/json" },
+  body: JSON.stringify({ title })
+})
+  .then(res => res.json())
+  .then(fig => {
+    console.log("figure loaded:", fig);
+    // fig.data should be an array of traces
+    Plotly.newPlot("embeddingPlot", fig.data, fig.layout);
+  })
+  .catch(err => console.error(err));
+
+  }
 </script>
+
 
 </body>
 </html>
