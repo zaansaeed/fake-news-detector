@@ -22,8 +22,7 @@ def get_embedding_subset(user_input, word2idx, embeddings, max_words=20):
     
     return selected_words
 
-@lru_cache(maxsize=100)
-def compute_tsne_for_words(word_tuple, embeddings_np):
+def compute_tsne_for_words(word_tuple, embeddings_np, word2idx):
     """Cache t-SNE results for repeated word combinations"""
     words = list(word_tuple)
     indices = [word2idx[word] for word in words]
@@ -78,7 +77,7 @@ def generate_plot(user_input, word2idx, embeddings):
             x_coords, y_coords, words = _tsne_cache[word_tuple]
         else:
             # Compute t-SNE
-            x_coords, y_coords, words = compute_tsne_for_words(word_tuple, embeddings_np)
+            x_coords, y_coords, words = compute_tsne_for_words(word_tuple, embeddings_np, word2idx)
             if x_coords is not None:
                 _tsne_cache[word_tuple] = (x_coords, y_coords, words)
         
@@ -155,5 +154,4 @@ def clear_tsne_cache():
     """Clear the t-SNE cache to free memory"""
     global _tsne_cache
     _tsne_cache.clear()
-    compute_tsne_for_words.cache_clear()
     print("t-SNE cache cleared")
