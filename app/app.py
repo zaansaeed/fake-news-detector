@@ -29,7 +29,6 @@ def load_model():
     global _model, _word2idx, _config
     
     if _model is None:
-        start_time = time.time()
         device = get_device()
         
         try:
@@ -51,10 +50,8 @@ def load_model():
             _model.load_state_dict(checkpoint["model_state"])
             _model.eval()
             
-            print(f"Model loaded in {time.time() - start_time:.2f} seconds")
             
         except Exception as e:
-            print(f"Error loading model: {e}")
             raise HTTPException(status_code=500, detail="Model loading failed")
     
     return _model, _word2idx, _config
