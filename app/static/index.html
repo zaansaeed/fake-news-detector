@@ -29,9 +29,26 @@
 </div>
 
 <script>
+  let isProcessing = false;
   async function predict() {
     const title = document.getElementById("titleInput").value;
-    
+    const button = document.getElementById("predictButton");
+
+
+    if (title.length === 0) {
+      document.getElementById("result").innerText = "Please enter a headline";
+      document.getElementById("result").style.color = "red";
+      return;
+    }
+
+    if (isProcessing) return;
+
+
+    isProcessing = true;
+    button.disabled = true;
+    button.innerText = "Processing...";
+
+
     // Call the prediction API
     const response = await fetch("/predict", {
       method: "POST",
@@ -50,20 +67,25 @@
     }
 
     // Now request the embedding plot based on user input
-fetch("/embedding-plot", {
-  method: "POST",
-  headers: { "Content-Type": "application/json" },
-  body: JSON.stringify({ title })
-})
-  .then(res => res.json())
-  .then(fig => {
-    console.log("figure loaded:", fig);
-    // fig.data should be an array of traces
-    Plotly.newPlot("embeddingPlot", fig.data, fig.layout);
+  fetch("/embedding-plot", {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ title })
   })
-  .catch(err => console.error(err));
+    .then(res => res.json())
+    .then(fig => {
+      console.log("figure loaded:", fig);
+      // fig.data should be an array of traces
+      Plotly.newPlot("embeddingPlot", fig.data, fig.layout);
+    })
+    .catch(err => console.error(err));
 
-  }
+    isProcessing = false;
+    button.disabled = false;
+    button.innerText = "Predict";
+    }
+
+  
 </script>
 
 
