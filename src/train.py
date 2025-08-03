@@ -143,7 +143,7 @@ for epoch in range(EPOCHS):
     val_acc /= len(val_loader)
 
     print(f"          → Val Loss: {val_loss:.4f} | Val Acc: {val_acc:.4f}")
-
+#save the model and the embeddings
 torch.save({
     "model_state": model.state_dict(),
     "config": {
