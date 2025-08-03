@@ -32,7 +32,10 @@
 
 <script>
   let isProcessing = false;
-  
+  let hasPlotted = false;
+  let predictController = null;
+  let plotController = null;
+
   async function predict() {
     const title = document.getElementById("titleInput").value.trim();
     const predictButton = document.getElementById("predictButton");
@@ -46,19 +49,27 @@
     }
 
     if (isProcessing) return;
-
     isProcessing = true;
+
+    // Cancel any in-flight requests from a previous run.
+    if (predictController) predictController.abort();
+    if (plotController) plotController.abort();
+    predictController = new AbortController();
+    plotController = new AbortController();
+
     predictButton.disabled = true;
     predictButton.innerText = "Processing...";
     resultBox.style.color = "black";
 
     try {
-      // Call the prediction API
+      // 1) Predict
       const response = await fetch("/predict", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ title })
+        body: JSON.stringify({ title }),
+        signal: predictController.signal
       });
+
       const data = await response.json();
 
       if (data === 1) {
@@ -68,25 +79,39 @@
         resultBox.innerText = "Fake News";
         resultBox.style.color = "red";
       }
-      // if the prediction is successful, then we can request the embedding plot
-      isProcessing = false;
-      predictButton.disabled = false;
-      predictButton.innerText = "Predict";
-      // Request embedding plot
-      const plotResponse = await fetch("/embedding-plot", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ title })
-      });
-      
-      if (plotResponse.ok) {
-        const fig = await plotResponse.json();
-        Plotly.newPlot("embeddingPlot", fig.data, fig.layout);
+
+      // 2) Plot (keep UI locked until this finishes)
+      try {
+        const plotResponse = await fetch("/embedding-plot", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ title }),
+          signal: plotController.signal
+        });
+
+        if (plotResponse.ok) {
+          const fig = await plotResponse.json();
+          const div = document.getElementById("embeddingPlot");
+
+          // Use react when we already have a plot; purge before first draw to keep memory tidy.
+          if (!hasPlotted) {
+            try { Plotly.purge(div); } catch (e) {}
+            await Plotly.newPlot(div, fig.data, fig.layout);
+            hasPlotted = true;
+          } else {
+            await Plotly.react(div, fig.data, fig.layout);
+          }
+        }
+      } catch (plotErr) {
+        // Non-fatal: show a small notice but don't block further predictions
+        console.warn("Plot error:", plotErr);
       }
     } catch (error) {
-      console.error('Error:', error);
-      resultBox.innerText = "Error: Failed to analyze headline";
-      resultBox.style.color = "red";
+      if (error.name !== "AbortError") {
+        console.error("Error:", error);
+        resultBox.innerText = "Error: Failed to analyze headline";
+        resultBox.style.color = "red";
+      }
     } finally {
       isProcessing = false;
       predictButton.disabled = false;
