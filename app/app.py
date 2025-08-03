@@ -76,7 +76,7 @@ def predict(input_data: NewsInput):
         x = encode_and_pad(x, word2idx, max_length=200)
         x = torch.tensor(x, dtype=torch.long).to(get_device())
         
-        with torch.no_grad():
+        with torch.inference_mode():
             output = model(x)
             prediction = torch.argmax(output, dim=1).item()
         
