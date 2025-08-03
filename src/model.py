@@ -3,11 +3,11 @@ import torch.nn as nn
 
 
 class FakeNewsClassifier(nn.Module):
-    def __init__(self,vocab_size, embed_dim,hidden_dim,num_classes,padding_idx,num_layers,drop_out,pretrained_embeddings=None):
+    def __init__(self,vocab_size, embed_dim,hidden_dim,num_classes,padding_idx,num_layers,drop_out,trained_embeddings=None):
         super(FakeNewsClassifier, self).__init__()
         #input as (32,200,200) where 32 is batch size, 200 is max length of sequence and 200 is the embedding dimension, ignore padding index
-        if pretrained_embeddings is not None:
-            self.embedding = nn.Embedding.from_pretrained(pretrained_embeddings, padding_idx=padding_idx)
+        if trained_embeddings is not None:
+            self.embedding = nn.Embedding.from_pretrained(trained_embeddings, padding_idx=padding_idx,freeze=False)
         else:
             # Initialize embedding layer with random weights
             # vocab_size is the size of the vocabulary, embed_dim is the dimension of the embeddings

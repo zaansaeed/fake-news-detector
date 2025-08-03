@@ -154,7 +154,7 @@ torch.save({
         "padding_idx": word2idx["<PAD>"],
         "num_layers": NUM_LAYERS,
         "drop_out": DROP_OUT,
-        "pretrained_embeddings": glove_embeddings
+        "train_embeddings": model.embedding.weight.detach().cpu().numpy()
     },
     "word2idx": word2idx  # optional but useful for inference
 }, "models/fake_news_checkpoint.pt")

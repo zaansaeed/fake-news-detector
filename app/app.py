@@ -44,7 +44,7 @@ def load_model():
                 padding_idx=_config["padding_idx"],
                 num_layers=_config["num_layers"],
                 drop_out=_config["drop_out"],
-                pretrained_embeddings=_config["pretrained_embeddings"]
+                trained_embeddings=_config["trained_embeddings"]
             ).to(device)
             
             _model.load_state_dict(checkpoint["model_state"])
@@ -92,9 +92,9 @@ def embedding_plot_snippet(input_data: NewsInput):
     try:
         model, word2idx, config = load_model()
         
-        embeddings_np = config["pretrained_embeddings"]
-        if isinstance(config["pretrained_embeddings"], torch.Tensor):
-            embeddings_np = config["pretrained_embeddings"].detach().cpu().numpy()
+        embeddings_np = config["trained_embeddings"]
+        if isinstance(config["trained_embeddings"], torch.Tensor):
+            embeddings_np = config["trained_embeddings"].detach().cpu().numpy()
         
         html_snippet = generate_plot(clean_and_tokenize(input_data.title), word2idx, embeddings_np)
         return html_snippet
