@@ -78,7 +78,7 @@ model = FakeNewsClassifier(
     padding_idx=word2idx["<PAD>"],
     num_layers=NUM_LAYERS,
     drop_out=DROP_OUT,
-    pretrained_embeddings=glove_embeddings
+    trained_embeddings=glove_embeddings
 ).to(device)
 
 criterion = nn.CrossEntropyLoss()
@@ -154,7 +154,7 @@ torch.save({
         "padding_idx": word2idx["<PAD>"],
         "num_layers": NUM_LAYERS,
         "drop_out": DROP_OUT,
-        "train_embeddings": model.embedding.weight.detach().cpu().numpy()
+        "trained_embeddings": model.embedding.weight.detach().cpu().numpy()
     },
     "word2idx": word2idx  # optional but useful for inference
 }, "models/fake_news_checkpoint.pt")
