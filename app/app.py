@@ -32,7 +32,7 @@ def load_model():
         device = get_device()
         
         try:
-            checkpoint = torch.load("models/fake_news_checkpoint.pt", map_location=device)
+            checkpoint = torch.load("models/fake_news_checkpoint.pt", map_location=device,weights_only=False)
             _config = checkpoint["config"]
             _word2idx = checkpoint["word2idx"]
             
@@ -44,7 +44,6 @@ def load_model():
                 padding_idx=_config["padding_idx"],
                 num_layers=_config["num_layers"],
                 drop_out=_config["drop_out"],
-                trained_embeddings=_config["trained_embeddings"]
             ).to(device)
             
             _model.load_state_dict(checkpoint["model_state"])
@@ -52,7 +51,8 @@ def load_model():
             
             
         except Exception as e:
-            raise HTTPException(status_code=500, detail="Model loading failed")
+            print(e)
+            raise HTTPException(status_code=500, detail=str(e))
     
     return _model, _word2idx, _config
 
@@ -75,7 +75,6 @@ def predict(input_data: NewsInput):
         x = [clean_and_tokenize(input_data.title)]
         x = encode_and_pad(x, word2idx, max_length=200)
         x = torch.tensor(x, dtype=torch.long).to(get_device())
-        
         with torch.inference_mode():
             output = model(x)
             prediction = torch.argmax(output, dim=1).item()
@@ -91,10 +90,8 @@ def predict(input_data: NewsInput):
 def embedding_plot_snippet(input_data: NewsInput):
     try:
         model, word2idx, config = load_model()
-        
-        embeddings_np = config["trained_embeddings"]
-        if isinstance(config["trained_embeddings"], torch.Tensor):
-            embeddings_np = config["trained_embeddings"].detach().cpu().numpy()
+        embeddings_np = model.embedding.weight.detach().cpu().numpy()
+  
         
         html_snippet = generate_plot(clean_and_tokenize(input_data.title), word2idx, embeddings_np)
         return html_snippet
