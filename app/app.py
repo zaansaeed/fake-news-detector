@@ -76,10 +76,15 @@ def predict(input_data: NewsInput):
         x = encode_and_pad(x, word2idx, max_length=200)
         x = torch.tensor(x, dtype=torch.long).to(get_device())
         with torch.inference_mode():
-            output = model(x)
-            prediction = torch.argmax(output, dim=1).item()
-        
-        return prediction
+            output = model(x)  # raw logits
+            probs = F.softmax(output, dim=1)  # probabilities
+            predicted_class = torch.argmax(probs, dim=1).item()
+            confidence = probs[0, predicted_class].item() * 100  # percent
+
+        return {
+            "class": predicted_class,       # 0 or 1
+            "confidence": confidence        # percent likelihood
+        }
 
     except Exception as e:
         raise HTTPException(status_code=500, detail=str(e))

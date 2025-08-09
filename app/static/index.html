@@ -61,13 +61,13 @@
       });
       const data = await response.json();
 
-      if (data === 1) {
-        resultBox.innerText = "Real News";
-        resultBox.style.color = "green";
-      } else {
-        resultBox.innerText = "Fake News";
-        resultBox.style.color = "red";
-      }
+      if (data.class === 1) {
+          resultBox.innerText = `Real News (${data.confidence.toFixed(2)}% confident)`;
+          resultBox.style.color = "green";
+        } else {
+          resultBox.innerText = `Fake News (${data.confidence.toFixed(2)}% confident)`;
+          resultBox.style.color = "red";
+        }
       // if the prediction is successful, then we can request the embedding plot
       isProcessing = false;
       predictButton.disabled = false;
